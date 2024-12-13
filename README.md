@@ -12,6 +12,7 @@ The application further enriches user experience by providing personalized featu
 ## Website
 https://apphasia5.godaddysites.com
 
+
 ## Team
 * Hikmetcan ALTAŞ     - 202011017
 * Emin Barış PORTAKAL - 202011028
