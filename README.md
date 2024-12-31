@@ -9,12 +9,16 @@ The application further enriches user experience by providing personalized featu
 
 [Software Requirements Specification (SRS)](https://github.com/CankayaUniversity/ceng-407-408-2024-2025-Turkish-Communication-Assistance-App-for-Individuals-with-Aphasia/wiki/Software-Requirements-Specification-(SRS))
 
+
 ## Website
 https://apphasia5.godaddysites.com
-
 
 ## Team
 * Hikmetcan ALTAŞ     - 202011017
 * Emin Barış PORTAKAL - 202011028
 * Emre Buğrahan YAŞAR - 202028021
 * Mesude GÖKPINAR     - 202028016
+
+## Advisers
+* Hayri SEVER
+* Sevgi KOYUNCU TUNÇ
