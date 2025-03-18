@@ -1,118 +1,82 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+// Ekranlar
+import FirstScreen from './screens/FirstScreen';
+import Login from './screens/Login';
+import Wizard from './screens/Wizard';
+import Home from './screens/Home';
+import Drawing from './screens/Drawing';
+import Exercise from './screens/Exercise';
+import MatchingGame from './screens/MatchingGame';
+import MemoryGame from './screens/MemoryGame';
+import BalloonGame from './screens/BalloonGame';
+import NewTextScreen from './screens/NewTextScreen'; // Yeni ekranı içeri aktarın
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const MainTabs = () => (
+  <Tab.Navigator
+    screenOptions={({ route }) => ({
+      tabBarIcon: ({ color, size }) => {
+        let iconName;
+        if (route.name === 'Home') iconName = 'home';
+        else if (route.name === 'Çizim') iconName = 'pencil';
+        else if (route.name === 'Egzersiz') iconName = 'heartbeat';
+        else if (route.name === 'Mesaj') iconName = 'envelope'; // Yeni ekran için ikon
+        return <Icon name={iconName} size={size} color={color} />;
+      },
+      tabBarActiveTintColor: '#4C6DAFFF',
+      tabBarInactiveTintColor: 'gray',
+      tabBarStyle: { backgroundColor: '#fff' },
+      headerShown: false,
+    })}
+  >
+    <Tab.Screen name="Home" component={Home} options={{ title: 'Ana Sayfa' }} />
+    <Tab.Screen name="Çizim" component={Drawing} options={{ title: 'Çizim' }} />
+    <Tab.Screen name="Mesaj" component={NewTextScreen} options={{ title: 'Mesaj' }} />
+    <Tab.Screen name="Egzersiz" component={Exercise} options={{ title: 'Egzersiz' }} />
+  </Tab.Navigator>
+);
+
+const App = () => {
+  const [initialRoute, setInitialRoute] = useState(null);
+
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      const loginType = await AsyncStorage.getItem('loginType');
+      setInitialRoute(userId && loginType ? 'BottomTabs' : 'FirstScreen');
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  if (initialRoute === null) {
+    return null; // Yükleniyor durumu
+  }
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="FirstScreen" component={FirstScreen} />
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Wizard" component={Wizard} />
+        <Stack.Screen name="BottomTabs" component={MainTabs} />
+        <Stack.Screen name="MatchingGame" component={MatchingGame} />
+        <Stack.Screen name="MemoryGame" component={MemoryGame} />
+        <Stack.Screen name="BalloonGame" component={BalloonGame} />
+
+
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+};
 
 export default App;
