@@ -1,48 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, View, Text, StyleSheet, Modal, TouchableOpacity, Dimensions, Image, ActivityIndicator } from 'react-native';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  Dimensions,
+  Image,
+  ActivityIndicator,
+  useWindowDimensions,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { height } = Dimensions.get('window'); // Ekran yüksekliğini alıyoruz
-
 const FirstScreen = ({ navigation }) => {
+  // Ekran boyutlarını alıyoruz
+  const { width, height } = useWindowDimensions();
+
+  // width >= 768 ise iPad (tablet) olarak kabul ediyoruz
+  const isTablet = width >= 768;
+
   const [modalVisible, setModalVisible] = useState(true);
   const [loading, setLoading] = useState(true);
 
+  // Login durumunu kontrol eden effect
   useEffect(() => {
     const checkLoginStatus = async () => {
       const userId = await AsyncStorage.getItem('userId');
       if (userId) {
-        // Eğer userId varsa doğrudan Home ekranına yönlendir
         navigation.reset({
           index: 0,
           routes: [{ name: 'Home', params: { userId } }],
         });
       } else {
-        // Eğer userId yoksa modal göster ve Login ekranına yönlendirme yapabilsin
         setLoading(false);
       }
     };
-
     checkLoginStatus();
   }, [navigation]);
 
   if (loading) {
-    // Giriş durumu kontrol edilirken bir yükleme göstergesi göster
+    // Giriş durumu kontrol edilirken bir yükleme göstergesi
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={dynamicStyles(isTablet, width, height).loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Image 
-        source={require('../assets/logo.png')} // Logoyu assets klasöründen alıyoruz
-        style={styles.logo}
+    <SafeAreaView style={dynamicStyles(isTablet, width, height).container}>
+      <Image
+        source={require('../assets/logo.png')}
+        style={dynamicStyles(isTablet, width, height).logo}
         resizeMode="contain"
       />
-      <Text style={styles.logoText}>Apphasia</Text>
+      <Text style={dynamicStyles(isTablet, width, height).logoText}>Apphasia</Text>
 
       <Modal
         visible={modalVisible}
@@ -50,19 +63,18 @@ const FirstScreen = ({ navigation }) => {
         animationType="slide"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.logoText}>Hoşgeldiniz !</Text>
-
-            <Text style={styles.modalTitle}>Hasta Profili Oluştur</Text>
+        <View style={dynamicStyles(isTablet, width, height).modalOverlay}>
+          <View style={dynamicStyles(isTablet, width, height).modalContent}>
+            <Text style={dynamicStyles(isTablet, width, height).logoText}>Hoşgeldiniz!</Text>
+            <Text style={dynamicStyles(isTablet, width, height).modalTitle}>Hasta Profili Oluştur</Text>
             <TouchableOpacity
-              style={styles.button}
+              style={dynamicStyles(isTablet, width, height).button}
               onPress={() => {
                 setModalVisible(false);
                 navigation.navigate('Login');
               }}
             >
-              <Text style={styles.buttonText}>Profil Oluştur</Text>
+              <Text style={dynamicStyles(isTablet, width, height).buttonText}>Profil Oluştur</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -71,57 +83,71 @@ const FirstScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  logo: {
-    width: 300, // Logo genişliği
-    height: 300, // Logo yüksekliği
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#4C6DAFFF',
-    fontFamily: 'Avenir',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end', // Modalın alt kısımdan açılmasını sağlıyor
-    backgroundColor: 'rgba(0, 0, 0, 0.0,1)', // Arkadaki alanın yarı saydam görünmesi için
-  },
-  modalContent: {
-    height: height / 2, // Ekranın yarısını kaplayacak
-    backgroundColor: '#E0E8F8FF',
-    borderTopLeftRadius: 100,
-    borderTopRightRadius: 100,
-    padding: 20,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 24,
-    marginBottom: 20,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontFamily: 'Avenir',
-  },
-  button: {
-    backgroundColor: '#4C6DAFFF',
-    padding: 15,
-    borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    fontFamily: 'Avenir',
-  },
-});
+// “isTablet, width, height” parametreleri alarak stil oluşturan bir fonksiyon.
+// iPad (tablet) için farklı boyutlar, fontlar tanımlıyoruz.
+const dynamicStyles = (isTablet, width, height) =>
+  StyleSheet.create({
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      backgroundColor: '#f5f5f5',
+      // Tabletler için biraz ekstra iç boşluk verilebilir
+      paddingHorizontal: isTablet ? 40 : 20,
+    },
+    logo: {
+      // iPad'de logoyu biraz daha büyük gösterelim
+      width: isTablet ? 400 : 300,
+      height: isTablet ? 400 : 300,
+    },
+    logoText: {
+      fontSize: isTablet ? 40 : 32,
+      fontWeight: 'bold',
+      marginBottom: isTablet ? 30 : 20,
+      color: '#4C6DAFFF',
+      fontFamily: 'Avenir',
+      textAlign: 'center',
+    },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      // Arkadaki alanın yarı saydam görünmesi
+      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    },
+    modalContent: {
+      // Telefonlarda ekranın yarısı, iPad'de 1/3’ü kadar bir alan kaplayabilir
+      height: isTablet ? height / 3 : height / 2,
+      backgroundColor: '#E0E8F8FF',
+      borderTopLeftRadius: isTablet ? 80 : 100,
+      borderTopRightRadius: isTablet ? 80 : 100,
+      padding: isTablet ? 40 : 20,
+      alignItems: 'center',
+    },
+    modalTitle: {
+      fontSize: isTablet ? 28 : 24,
+      marginBottom: isTablet ? 30 : 20,
+      textAlign: 'center',
+      fontWeight: 'bold',
+      fontFamily: 'Avenir',
+    },
+    button: {
+      backgroundColor: '#4C6DAFFF',
+      padding: isTablet ? 20 : 15,
+      borderRadius: 8,
+      width: '100%',
+      alignItems: 'center',
+      marginTop: isTablet ? 30 : 20,
+    },
+    buttonText: {
+      color: '#fff',
+      fontSize: isTablet ? 20 : 16,
+      fontWeight: 'bold',
+      fontFamily: 'Avenir',
+    },
+  });
 
 export default FirstScreen;

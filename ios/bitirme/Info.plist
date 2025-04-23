@@ -46,6 +46,8 @@
 	<string>Kamerayı kullanmak için izin gerekiyor.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mikrofon izni gereklidir</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Fotoğraf galerisine erişim izni gerekiyor.</string>
 	<key>UIAppFonts</key>

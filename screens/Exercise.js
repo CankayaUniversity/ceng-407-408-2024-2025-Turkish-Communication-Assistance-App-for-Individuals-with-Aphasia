@@ -28,7 +28,7 @@ const Exercise = () => {
         style={styles.button}
         onPress={() => navigation.navigate('MatchingGame')}
       >
-        <Icon name="puzzle-piece" size={20} color="#fff" style={styles.icon} />
+        <Icon name="puzzle-piece" size={20} color={styles.icon.color} style={styles.icon} />
         <Text style={styles.buttonText}>Eşleştirme Egzersizi</Text>
       </TouchableOpacity>
 
@@ -37,7 +37,7 @@ const Exercise = () => {
         style={styles.button}
         onPress={() => navigation.navigate('BalloonGame')}
       >
-        <Icon name="bolt" size={20} color="#fff" style={styles.icon} />
+        <Icon name="bolt" size={20} color={styles.icon.color} style={styles.icon} />
         <Text style={styles.buttonText}>Refleks Egzersizi</Text>
       </TouchableOpacity>
 
@@ -46,70 +46,51 @@ const Exercise = () => {
         style={styles.button}
         onPress={() => navigation.navigate('MemoryGame')}
       >
-        <Icon name="brain" size={20} color="#fff" style={styles.icon} />
+        <Icon name="brain" size={20} color={styles.icon.color} style={styles.icon} />
         <Text style={styles.buttonText}>Hafıza Egzersizi</Text>
-      </TouchableOpacity>
-
-      {/* Çıkış Yap Butonu */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="sign-out-alt" size={20} color="#fff" style={styles.icon} />
-        <Text style={styles.logoutButtonText}>Çıkış Yap</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  // Arka plan, önceki mesaj ekranıyla benzer
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#E8F4F5FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Başlık (header) aynı boyut, renk, font, vb. (Mesaj Kategorisi Seçin ile aynı)
   header: {
     fontSize: 24,
+    marginBottom: 30,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#333',
     fontFamily: 'Avenir',
   },
+  // Buton tasarımı (mor arka plan, beyaz metin)
   button: {
     flexDirection: 'row', // İkon ve metni yan yana hizala
     alignItems: 'center',
-    backgroundColor: '#4C6DAFFF',
+    backgroundColor: '#9B59B6',
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 8,
     marginVertical: 10,
     width: '80%',
+    justifyContent: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
     fontFamily: 'Avenir',
-    marginLeft: 10, // İkon ve metin arasındaki boşluk
+    marginLeft: 10,
   },
   icon: {
-    marginRight: 10, // Metin ile ikon arasındaki boşluk
-  },
-  logoutButton: {
-    flexDirection: 'row', // İkon ve metni yan yana hizala
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: 20, // Ekranın en altına sabitle
-    backgroundColor: '#FF5252',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    width: '80%',
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    fontFamily: 'Avenir',
-    marginLeft: 10, // İkon ve metin arasındaki boşluk
+    color: '#FFFFFF',
+    marginRight: 10,
   },
 });
 
