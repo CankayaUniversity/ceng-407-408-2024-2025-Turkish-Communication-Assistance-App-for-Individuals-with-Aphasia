@@ -1,3 +1,4 @@
+// src/screens/NewTextScreen.js
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -9,6 +10,7 @@ import {
   FlatList,
   ScrollView,
   Alert,
+  ImageBackground,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,38 +32,10 @@ const quickMessagesList = [
   "🚫 Yapma",
   "⏰ Saat kaç?",
   "💊 İlacımı istiyorum",
-
 ];
 
 // --------------------------------------------------
-// Önceki kodunuzdaki "Temel Sözcükler" dizisini
-// ileride referans için tutabilirsiniz (opsiyonel)
-// --------------------------------------------------
-const basicWordsList = [
-  "❓ 5N 1K Soruları",
-  "🙂 Ben",
-  "😉 Sen",
-  "😐 O",
-  "👫 Biz",
-  "👬 Siz",
-  "👥 Onlar",
-  "🤲 Al",
-  "👐 Ver",
-  "❤️ İstiyorum",
-  "😍 Severim",
-  "😒 Sevmem",
-  "🆘 Yardım Et",
-  "➡️ Gel",
-  "✋ Dur",
-  "🚶 Git",
-  "🔓 Aç",
-  "🔒 Kapa",
-  "➕ Ekle",
-];
-
-// --------------------------------------------------
-// Yeni alt başlıklar (5N1K, Özneler, Fiiller, Duygular)
-// Her kategori, buton etiketlerini içeriyor.
+// "Temel Sözcükler" kategorileri
 // --------------------------------------------------
 const basicWordsCategories = [
   {
@@ -114,95 +88,71 @@ const NewTextScreen = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [userId, setUserId] = useState(null);
-
-  // Seçilen kategori (HizliSohbet, TemelSozcukler, Klavye)
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // --- useEffect: userId çekiyoruz ---
   useEffect(() => {
-    const fetchUserId = async () => {
-      const id = await AsyncStorage.getItem('userId');
-      setUserId(id);
-    };
-    fetchUserId();
+    AsyncStorage.getItem('userId').then(id => setUserId(id));
   }, []);
 
-  // --- useEffect: Mesajları firestore'dan çek ---
   useEffect(() => {
-    if (userId) {
-      const fetchMessages = async () => {
-        const userDoc = await firestore().collection('users').doc(userId).get();
+    if (!userId) return;
+    firestore()
+      .collection('users')
+      .doc(userId)
+      .get()
+      .then(userDoc => {
         const caregiverId = userDoc.data()?.caregiverId;
-
         if (!caregiverId) {
           Alert.alert('Hata', 'Bakıcınız bulunamadı.');
           return;
         }
-
-        const conversationId =
-          userDoc.data()?.status === 'Hasta'
+        const convId =
+          userDoc.data().status === 'Hasta'
             ? `${userId}_${caregiverId}`
             : `${caregiverId}_${userId}`;
-
-        const unsubscribe = firestore()
+        return firestore()
           .collection('messages')
-          .doc(conversationId)
+          .doc(convId)
           .collection('messages')
           .orderBy('timestamp', 'asc')
-          .onSnapshot((snapshot) => {
-            const fetchedMessages = snapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }));
-            setMessages(fetchedMessages);
+          .onSnapshot(snap => {
+            setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
           });
-
-        return unsubscribe;
-      };
-
-      fetchMessages();
-    }
+      });
   }, [userId]);
 
-  // --- Mesaj Gönder ---
-  const sendMessage = async (textToSend) => {
+  const sendMessage = async textToSend => {
     if (!textToSend.trim()) {
       Alert.alert('Hata', 'Lütfen bir mesaj yazın.');
       return;
     }
-
     try {
       const userDoc = await firestore().collection('users').doc(userId).get();
       const caregiverId = userDoc.data()?.caregiverId;
-
       if (!caregiverId) {
         Alert.alert('Hata', 'Bakıcınız bulunamadı.');
         return;
       }
-
-      const conversationId =
-        userDoc.data()?.status === 'Hasta'
+      const convId =
+        userDoc.data().status === 'Hasta'
           ? `${userId}_${caregiverId}`
           : `${caregiverId}_${userId}`;
-
       await firestore()
         .collection('messages')
-        .doc(conversationId)
+        .doc(convId)
         .collection('messages')
         .add({
           senderId: userId,
           text: textToSend,
           timestamp: firestore.FieldValue.serverTimestamp(),
         });
-
       setMessage('');
-    } catch (error) {
-      console.error('Mesaj gönderme hatası:', error);
+    } catch (e) {
+      console.error(e);
       Alert.alert('Hata', 'Mesaj gönderilirken bir sorun oluştu.');
     }
   };
 
-  // --- Mesajları Temizle (clearMessages) ---
   const clearMessages = () => {
     Alert.alert(
       'Mesajları Temizle',
@@ -214,29 +164,21 @@ const NewTextScreen = () => {
           onPress: async () => {
             const userDoc = await firestore().collection('users').doc(userId).get();
             const caregiverId = userDoc.data()?.caregiverId;
-
             if (!caregiverId) {
               Alert.alert('Hata', 'Bakıcınız bulunamadı.');
               return;
             }
-
-            const conversationId =
-              userDoc.data()?.status === 'Hasta'
+            const convId =
+              userDoc.data().status === 'Hasta'
                 ? `${userId}_${caregiverId}`
                 : `${caregiverId}_${userId}`;
-
-            const messagesRef = firestore()
+            const msgRef = firestore()
               .collection('messages')
-              .doc(conversationId)
+              .doc(convId)
               .collection('messages');
-
-            const snapshot = await messagesRef.get();
+            const snap = await msgRef.get();
             const batch = firestore().batch();
-
-            snapshot.docs.forEach((doc) => {
-              batch.delete(doc.ref);
-            });
-
+            snap.docs.forEach(d => batch.delete(d.ref));
             await batch.commit();
             setMessages([]);
           },
@@ -245,122 +187,82 @@ const NewTextScreen = () => {
     );
   };
 
-  // --------------------------------------------------------
-  // 1) Kategori Seçim Ekranı (Seçim Yapılmadıysa)
-  // --------------------------------------------------------
-  if (!selectedCategory) {
-    return (
-      <SafeAreaView style={styles.categoryContainer}>
-        <Text style={styles.categoryTitle}>Mesaj Kategorisi Seçin</Text>
+  // Ekranlar:
+  const renderCategorySelection = () => (
+    <SafeAreaView style={styles.categoryContainer}>
+      <Text style={styles.categoryTitle}>Mesaj Kategorisi Seçin</Text>
+      <TouchableOpacity
+        style={styles.categoryButton}
+        onPress={() => setSelectedCategory('HizliSohbet')}
+      >
+        <Text style={styles.categoryButtonText}>1 - Hızlı Sohbet</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.categoryButton}
+        onPress={() => setSelectedCategory('TemelSozcukler')}
+      >
+        <Text style={styles.categoryButtonText}>2 - Temel Sözcükler</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.categoryButton}
+        onPress={() => setSelectedCategory('Klavye')}
+      >
+        <Text style={styles.categoryButtonText}>3 - Klavye</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
 
-        <TouchableOpacity
-          style={styles.categoryButton}
-          onPress={() => setSelectedCategory('HizliSohbet')}
-        >
-          <Text style={styles.categoryButtonText}>1 - Hızlı Sohbet</Text>
-        </TouchableOpacity>
+  const renderQuickChat = () => (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.headerText}>Hızlı Sohbetler</Text>
+      <FlatList
+        data={quickMessagesList}
+        numColumns={2}
+        keyExtractor={(_, i) => i.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.gridItem} onPress={() => sendMessage(item)}>
+            <Text style={styles.gridItemText}>{item}</Text>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.gridContainer}
+      />
+      <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCategory(null)}>
+        <Text style={styles.backButtonText}>Geri</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
 
-        <TouchableOpacity
-          style={styles.categoryButton}
-          onPress={() => setSelectedCategory('TemelSozcukler')}
-        >
-          <Text style={styles.categoryButtonText}>2 - Temel Sözcükler</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.categoryButton}
-          onPress={() => setSelectedCategory('Klavye')}
-        >
-          <Text style={styles.categoryButtonText}>3 - Klavye</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  // --------------------------------------------------------
-  // 2) Hızlı Sohbet Ekranı
-  // --------------------------------------------------------
-  if (selectedCategory === 'HizliSohbet') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.headerText}>Hızlı Sohbetler</Text>
-
-        {/* 2 sütunlu liste */}
-        <FlatList
-          data={quickMessagesList}
-          numColumns={2}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.gridItem}
-              onPress={() => sendMessage(item)}
-            >
-              <Text style={styles.gridItemText}>{item}</Text>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.gridContainer}
-        />
-
-        {/* Geri Butonu */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => setSelectedCategory(null)}
-        >
-          <Text style={styles.backButtonText}>Geri</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  // --------------------------------------------------------
-  // 3) Temel Sözcükler Ekranı
-  //    - 5N1K, Özneler, Fiiller, Duygular
-  //    Hepsi TEK EKRANDA, kaydırılabilir ScrollView içinde.
-  //    En altta Geri butonunu koruyoruz.
-  // --------------------------------------------------------
-  if (selectedCategory === 'TemelSozcukler') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.headerText}>Temel Sözcükler</Text>
-
-        {/* Kaydırılabilir alan; contentContainerStyle'da flexGrow kullanılarak içerik 
-            ekranı doldurmasa bile kaydırma sağlanıyor */}
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
-          {basicWordsCategories.map((cat, index) => (
-            <View key={index} style={styles.categorySection}>
-              <Text style={styles.categoryHeader}>{cat.title}</Text>
-              <View style={styles.categoryButtonsContainer}>
-                {cat.data.map((item, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={styles.gridItem}
-                    onPress={() => sendMessage(item.emoji ? `${item.emoji} ${item.text}` : item.text)}
-                  >
-                    <Text style={styles.gridItemText}>
-                      {item.emoji ? `${item.emoji} ` : ''}{item.text}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+  const renderBasicWords = () => (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.headerText}>Temel Sözcükler</Text>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
+        {basicWordsCategories.map((cat, idx) => (
+          <View key={idx} style={styles.categorySection}>
+            <Text style={styles.categoryHeader}>{cat.title}</Text>
+            <View style={styles.categoryButtonsContainer}>
+              {cat.data.map((it, j) => (
+                <TouchableOpacity
+                  key={j}
+                  style={styles.gridItem}
+                  onPress={() => sendMessage(it.emoji ? `${it.emoji} ${it.text}` : it.text)}
+                >
+                  <Text style={styles.gridItemText}>
+                    {it.emoji ? `${it.emoji} ` : ''}
+                    {it.text}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          ))}
-        </ScrollView>
+          </View>
+        ))}
+      </ScrollView>
+      <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCategory(null)}>
+        <Text style={styles.backButtonText}>Geri</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
 
-        {/* Geri Butonu en altta */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => setSelectedCategory(null)}
-        >
-          <Text style={styles.backButtonText}>Geri</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  // --------------------------------------------------------
-  // 4) Klavye Ekranı (Klasik Sohbet)
-  // --------------------------------------------------------
-  return (
+  const renderChat = () => (
     <SafeAreaView style={styles.container}>
       <View style={styles.chatHeader}>
         <Text style={styles.chatHeaderTitle}>Mesajlar (Klavye)</Text>
@@ -370,10 +272,9 @@ const NewTextScreen = () => {
           </TouchableOpacity>
         )}
       </View>
-
       <FlatList
         data={messages}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View
             style={[
@@ -395,7 +296,6 @@ const NewTextScreen = () => {
         )}
         contentContainerStyle={{ paddingBottom: 20 }}
       />
-
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -408,30 +308,45 @@ const NewTextScreen = () => {
           <Text style={styles.sendButtonText}>Gönder</Text>
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => setSelectedCategory(null)}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCategory(null)}>
         <Text style={styles.backButtonText}>Kategorilere Dön</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
+
+  return (
+    <ImageBackground
+      source={require('../assets/background.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      { !selectedCategory
+        ? renderCategorySelection()
+        : selectedCategory === 'HizliSohbet'
+          ? renderQuickChat()
+          : selectedCategory === 'TemelSozcukler'
+            ? renderBasicWords()
+            : renderChat()
+      }
+    </ImageBackground>
+  );
 };
 
-// === Stil Ayarları ===
 const styles = StyleSheet.create({
-  // Genel Ekran Yapısı
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#E8F4F5FF',
+    backgroundColor: 'transparent',
     paddingHorizontal: 16,
     paddingTop: 10,
   },
-  // Kategori Seçim Ekranı
   categoryContainer: {
     flex: 1,
-    backgroundColor: '#E8F4F5FF',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
@@ -440,10 +355,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginBottom: 30,
     fontWeight: 'bold',
-    color: greyDark,
+    color: '#ffffff',
   },
   categoryButton: {
-    backgroundColor: neonPurple,
+    backgroundColor: '#8063D6',
     padding: 20,
     borderRadius: 10,
     marginVertical: 10,
@@ -455,22 +370,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  // Ortak Başlıklar
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: neonPurple,
+    color: white,
     marginTop: 10,
     marginBottom: 10,
     alignSelf: 'center',
   },
-  // Grid Dizilimi (Hızlı Sohbet vb.)
   gridContainer: {
     alignItems: 'center',
     paddingBottom: 20,
   },
   gridItem: {
-    backgroundColor: neonPurple,
+    backgroundColor: '#8063D6',
     padding: 15,
     borderRadius: 10,
     margin: 8,
@@ -484,9 +397,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
-  // Geri Butonu
   backButton: {
-    backgroundColor: '#757575',
+    backgroundColor: '#8063D6',
     padding: 15,
     borderRadius: 10,
     marginTop: 10,
@@ -498,7 +410,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  // Sohbet (Klavye) Başlık
   chatHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -521,7 +432,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  // Mesaj Kartı
   messageCard: {
     maxWidth: '70%',
     padding: 10,
@@ -532,7 +442,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  // Mesaj Yazma Alanı
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -567,7 +476,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  // Temel Sözcükler Kategorileri
   categorySection: {
     marginBottom: 20,
   },
@@ -580,7 +488,7 @@ const styles = StyleSheet.create({
   categoryButtonsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: 'center',  
   },
 });
 

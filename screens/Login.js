@@ -9,6 +9,7 @@ import {
   Dimensions,
   Image,
   Alert,
+  ImageBackground,    // ← eklendi
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
@@ -66,7 +67,11 @@ const Login = () => {
       // Kullanıcı bilgilerini çek
       const googleUser = {
         id: userInfo?.user?.id || userInfo?.data?.user?.id,
-        name: userInfo?.user?.name || `${userInfo?.data?.user?.givenName || ''} ${userInfo?.data?.user?.familyName || ''}`.trim(),
+        name:
+          userInfo?.user?.name ||
+          `${userInfo?.data?.user?.givenName || ''} ${
+            userInfo?.data?.user?.familyName || ''
+          }`.trim(),
         email: userInfo?.user?.email || userInfo?.data?.user?.email,
       };
   
@@ -74,7 +79,9 @@ const Login = () => {
       console.log('Google User Info:', googleUser);
   
       if (!googleUser.id || !googleUser.email) {
-        throw new Error('Google Sign-In başarısız: Kullanıcı ID veya email alınamadı');
+        throw new Error(
+          'Google Sign-In başarısız: Kullanıcı ID veya email alınamadı'
+        );
       }
   
       // Firestore kullanıcı kontrolü ve kaydı
@@ -93,8 +100,6 @@ const Login = () => {
     }
   };
   
-  
-
   const onAppleButtonPress = async () => {
     try {
       const appleAuthRequestResponse = await appleAuth.performRequest({
@@ -104,7 +109,9 @@ const Login = () => {
 
       const { user: appleUserId, email, fullName } = appleAuthRequestResponse;
       if (!appleUserId) {
-        throw new Error('Apple kimlik doğrulama başarısız: Geçerli bir kullanıcı ID alınamadı.');
+        throw new Error(
+          'Apple kimlik doğrulama başarısız: Geçerli bir kullanıcı ID alınamadı.'
+        );
       }
 
       let name = fullName
@@ -132,48 +139,58 @@ const Login = () => {
     }
   };
 
-  
-
   return (
-    <SafeAreaView style={styles.container}>
-      <Image
-        source={require('../assets/logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <Text style={styles.logoText}>Apphasia</Text>
+    <ImageBackground
+      source={require('../assets/background_login.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.container}>
 
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.logoText}>Giriş</Text>
 
-            <TouchableOpacity style={styles.googleButton} onPress={onGoogleButtonPress}>
-              <Icon name="google" size={24} color="#fff" style={styles.icon} />
-              <Text style={styles.buttonText}>Google ile Giriş Yap</Text>
-            </TouchableOpacity>
+        <Modal
+          visible={modalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.logoText}>Giriş</Text>
 
-            <TouchableOpacity style={styles.appleButton} onPress={onAppleButtonPress}>
-              <Icon name="apple" size={24} color="#fff" style={styles.icon} />
-              <Text style={styles.buttonText}>Apple ile Giriş Yap</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={onGoogleButtonPress}
+              >
+                <Icon name="google" size={24} color="#fff" style={styles.icon} />
+                <Text style={styles.buttonText}>Google ile Giriş Yap</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.appleButton}
+                onPress={onAppleButtonPress}
+              >
+                <Icon name="apple" size={24} color="#fff" style={styles.icon} />
+                <Text style={styles.buttonText}>Apple ile Giriş Yap</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent', // arka plan resmi görünür kalsın
   },
   logo: {
     width: 300,
@@ -183,17 +200,17 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#4C6DAFFF',
+    color: '#000000',
     fontFamily: 'Avenir',
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.0,1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   modalContent: {
     height: height / 2,
-    backgroundColor: '#E0E8F8FF',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderTopLeftRadius: 100,
     borderTopRightRadius: 100,
     padding: 20,

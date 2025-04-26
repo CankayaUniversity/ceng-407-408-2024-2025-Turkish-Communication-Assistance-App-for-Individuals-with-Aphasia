@@ -1,3 +1,4 @@
+// src/screens/Wizard.js
 import React, { useState } from 'react';
 import {
   SafeAreaView,
@@ -14,6 +15,7 @@ import {
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,   // ← eklendi
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
@@ -65,7 +67,6 @@ const Wizard = ({ route }) => {
       Alert.alert('Başarılı', `Rolünüz (${role}) olarak kaydedildi.`);
       setRoleModalVisible(false);
 
-      // Ana sayfaya yönlendirme
       navigation.navigate('BottomTabs', {
         screen: 'Home',
         params: { userId },
@@ -77,108 +78,100 @@ const Wizard = ({ route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Image
-        source={require('../assets/logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <Text style={styles.logoText}>Apphasia</Text>
+    <ImageBackground
+      source={require('../assets/background_login.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.container}>
+        {/* Kullanıcı Bilgileri Modal */}
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView
+              style={styles.modalOverlay}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalHeader}>Kullanıcı Bilgileri</Text>
 
-      {/* Kullanıcı Bilgileri Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView
-            style={styles.modalOverlay}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
+                <TextInput
+                  style={styles.input}
+                  placeholder="Adınızı girin"
+                  placeholderTextColor="#888"
+                  value={name}
+                  onChangeText={setName}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Yaşınızı girin"
+                  placeholderTextColor="#888"
+                  value={age}
+                  onChangeText={setAge}
+                  keyboardType="numeric"
+                />
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => {
+                    setGender(gender === 'Erkek' ? 'Kadın' : 'Erkek');
+                  }}
+                >
+                  <Text style={gender ? styles.textInput : styles.placeholderText}>
+                    {gender || 'Cinsiyet Seçin'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={saveUserDetails}>
+                  <Text style={styles.buttonText}>Kaydet</Text>
+                </TouchableOpacity>
+              </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Rol Seçimi Modal */}
+        <Modal
+          visible={roleModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setRoleModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalHeader}>Kullanıcı Bilgileri</Text>
-
-              <TextInput
-                style={styles.input}
-                placeholder="Adınızı girin"
-                placeholderTextColor="#888"
-                value={name}
-                onChangeText={setName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Yaşınızı girin"
-                placeholderTextColor="#888"
-                value={age}
-                onChangeText={setAge}
-                keyboardType="numeric"
-              />
+              <Text style={styles.modalHeader}>Rol Seçimi</Text>
               <TouchableOpacity
-                style={styles.input}
-                onPress={() => {
-                  setGender(gender === 'Erkek' ? 'Kadın' : 'Erkek');
-                }}
+                style={styles.button}
+                onPress={() => saveUserRole('Hasta')}
               >
-                <Text style={gender ? styles.textInput : styles.placeholderText}>
-                  {gender || 'Cinsiyet Seçin'}
-                </Text>
+                <Text style={styles.buttonText}>Hasta</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.button} onPress={saveUserDetails}>
-                <Text style={styles.buttonText}>Kaydet</Text>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => saveUserRole('Bakıcı')}
+              >
+                <Text style={styles.buttonText}>Bakıcı</Text>
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* Rol Seçimi Modal */}
-      <Modal
-        visible={roleModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setRoleModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalHeader}>Rol Seçimi</Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => saveUserRole('Hasta')}
-            >
-              <Text style={styles.buttonText}>Hasta</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => saveUserRole('Bakıcı')}
-            >
-              <Text style={styles.buttonText}>Bakıcı</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  logo: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#4C6DAFFF',
-    fontFamily: 'Avenir',
+    backgroundColor: 'transparent',
   },
   modalOverlay: {
     flex: 1,
@@ -187,7 +180,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     height: height / 2,
-    backgroundColor: '#E0E8F8FF',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // %90 opak beyaz
     borderTopLeftRadius: 100,
     borderTopRightRadius: 100,
     padding: 20,
@@ -197,7 +190,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#4C6DAFFF',
+    color: '#000000',
     fontFamily: 'Avenir',
   },
   input: {
@@ -221,7 +214,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Avenir',
   },
   button: {
-    backgroundColor: '#4C6DAFFF',
+    backgroundColor: '#987cd3',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
